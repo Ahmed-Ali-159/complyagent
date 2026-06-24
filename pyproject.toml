@@ -19,6 +19,7 @@ dependencies = [
     "langchain-huggingface>=1.2.2",
     "langgraph>=1.2.6",
     "lxml>=6.1.1",
+    "pdfplumber>=0.11.10",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.0",
     "python-dotenv>=1.2.2",
