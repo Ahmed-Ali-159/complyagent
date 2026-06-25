@@ -1,0 +1,48 @@
+{
+  "policy_file": "policy_b_subtle_gaps.txt",
+  "description": "A policy with no outright false statements, but several mandatory GDPR disclosures are entirely absent - this file is designed to test Gap Hunter, not the Compliance Analyst.",
+  "violations": [],
+  "gaps": [
+    {
+      "gap_id": "g1",
+      "missing_requirement": "No data retention period or criteria is disclosed anywhere in the policy.",
+      "violated_articles": ["GDPR-Art-13-2-a"],
+      "severity": "high",
+      "explanation": "Article 13(2)(a) requires disclosure of the storage period, or the criteria used to determine it. This policy never mentions how long check-in entries, habit data, or account information is retained."
+    },
+    {
+      "gap_id": "g2",
+      "missing_requirement": "No mention of the data subject's rights (access, rectification, erasure, restriction, portability, objection) anywhere in the policy.",
+      "violated_articles": ["GDPR-Art-13-2-b"],
+      "severity": "critical",
+      "explanation": "Article 13(2)(b) requires informing data subjects of their rights. This policy contains zero mention of any GDPR right - no right to access, erase, or port data is described at all."
+    },
+    {
+      "gap_id": "g3",
+      "missing_requirement": "No mention of the right to lodge a complaint with a supervisory authority.",
+      "violated_articles": ["GDPR-Art-13-2-d"],
+      "severity": "high",
+      "explanation": "Article 13(2)(d) requires disclosing the right to lodge a complaint with a supervisory authority. Not mentioned anywhere."
+    },
+    {
+      "gap_id": "g4",
+      "missing_requirement": "No identification of a Data Protection Officer or statement that none is required/appointed.",
+      "violated_articles": ["GDPR-Art-13-1-b"],
+      "severity": "medium",
+      "explanation": "Article 13(1)(b) requires the contact details of the DPO, where applicable. The policy gives a generic contact email but never addresses DPO status at all (whether one exists or whether the company has assessed that one isn't required)."
+    },
+    {
+      "gap_id": "g5",
+      "missing_requirement": "No country/region specified for the third-party email and push-notification providers - no statement about whether any international transfer occurs.",
+      "violated_articles": ["GDPR-Art-13-1-f"],
+      "severity": "medium",
+      "explanation": "Article 13(1)(f) requires disclosure of an intention to transfer data to a third country, including safeguards, if applicable. The policy mentions third-party processors but gives no indication of where they are located or whether a transfer outside the EEA occurs."
+    }
+  ],
+  "expected_clean_sections": [
+    "INFORMATION WE COLLECT",
+    "HOW WE USE YOUR INFORMATION",
+    "SHARING YOUR INFORMATION",
+    "SECURITY MEASURES"
+  ]
+}

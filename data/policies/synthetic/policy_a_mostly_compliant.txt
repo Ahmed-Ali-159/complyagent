@@ -1,0 +1,54 @@
+PRIVACY POLICY — CloudNote (a note-taking app)
+Last updated: January 2025
+
+1. WHO WE ARE
+CloudNote ("we", "us") provides a cloud-based note-taking application. We are the
+data controller for personal data processed through our service. You can contact
+our Data Protection Officer at dpo@cloudnote-example.com.
+
+2. WHAT DATA WE COLLECT
+We collect your email address and name when you create an account. We collect the
+content of notes you create, store, and share through the app. We collect device
+information (browser type, operating system) and IP address for security purposes.
+
+3. WHY WE PROCESS YOUR DATA
+We process your account information to provide the note-taking service to you,
+which is necessary for the performance of our contract with you under Article
+6(1)(b) GDPR. We process device and IP information based on our legitimate interest
+in securing our service against unauthorized access, under Article 6(1)(f) GDPR.
+
+4. HOW LONG WE KEEP YOUR DATA
+We retain your account data for as long as your account remains active. If you
+delete your account, we will erase your personal data within 30 days, except where
+we are required to retain certain records for tax and accounting purposes for up to
+7 years, as required by applicable law.
+
+5. WHO WE SHARE YOUR DATA WITH
+We share your data with our cloud hosting provider, which stores your notes on our
+behalf. We do not sell your personal data to third parties. We may share aggregated,
+anonymized usage statistics with analytics partners; this aggregated data does not
+identify you personally.
+
+6. INTERNATIONAL TRANSFERS
+Our hosting provider operates servers exclusively within the European Economic Area.
+We do not transfer your personal data outside the EEA.
+
+7. YOUR RIGHTS
+You have the right to access, rectify, and erase your personal data. You have the
+right to restrict or object to our processing of your data. You have the right to
+lodge a complaint with your local data protection supervisory authority. To exercise
+any of these rights, contact us at dpo@cloudnote-example.com.
+
+8. SECURITY
+We encrypt your data in transit and at rest. We restrict access to personal data to
+employees who need it to perform their job duties.
+
+9. MARKETING COMMUNICATIONS
+With your separate, explicit consent, we may send you marketing emails about new
+features. You may unsubscribe from these emails at any time using the link provided
+in each email, free of charge, with no impact on your use of the core service.
+
+10. CHILDREN'S DATA
+CloudNote keeps a permanent record of all user activity, including for users under
+the age of 16, with no special parental consent process, because notes data is
+considered low-risk.
