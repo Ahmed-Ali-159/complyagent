@@ -43,3 +43,14 @@ def weighted_rrf_fuse(
 
     ranked = sorted(fused_scores.items(), key=lambda pair: pair[1], reverse=True)
     return ranked
+
+def chroma_results_to_ranked_list(chroma_query_result: dict) -> list[tuple[str, float]]:
+    """Convert Chroma's batch-query output (single query) into the (chunk_id,
+    score)-list format RRF expects. Chroma already returns results pre-sorted by
+    similarity (closest first), so we just unwrap the outer batch-dimension list
+    and pair each id with its distance - the distance VALUE is never actually used
+    by RRF (which only consumes rank position), but we keep it for debugging/logging.
+    """
+    ids = chroma_query_result["ids"][0]
+    distances = chroma_query_result["distances"][0]
+    return list(zip(ids, distances))
