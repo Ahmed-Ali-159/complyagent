@@ -10,10 +10,14 @@ Rules implemented (all confirmed against real GDPR PDF text):
     paragraph's lead-in text prepended to each sub-point's text.
   - An article with no paragraph numbering at all (prose-only) -> one chunk for
     the entire article body.
+  - An article with sub-points directly under it, NO paragraph wrapper at all
+    (e.g. Article 50) -> one chunk per sub-point, with the article's own
+    unnumbered lead-in sentence prepended to EVERY sub-point in that run.
 """
 from __future__ import annotations
 
 from complyagent.regulation.line_classifier import classify_line
+
 
 def chunk_articles_text(articles_text: str) -> list[dict]:
     lines = articles_text.split("\n")
@@ -33,6 +37,8 @@ def chunk_articles_text(articles_text: str) -> list[dict]:
     current_subpoint_lines: list[str] = []
 
     article_has_seen_any_paragraph_marker = False
+    article_has_seen_any_subpoint = False
+    paragraphless_leadin_captured = False
     prose_lines: list[str] = []
 
     def leadin_text() -> str:
@@ -44,8 +50,14 @@ def chunk_articles_text(articles_text: str) -> list[dict]:
             return
         body = " ".join(current_subpoint_lines).strip()
         full_text = f"{leadin_text()} {body}".strip()
+
+        if current_paragraph_number is not None:
+            chunk_id = f"GDPR-Art-{current_article_number}-{current_paragraph_number}-{current_subpoint_letter}"
+        else:
+            chunk_id = f"GDPR-Art-{current_article_number}-{current_subpoint_letter}"
+
         chunks.append({
-            "chunk_id": f"GDPR-Art-{current_article_number}-{current_paragraph_number}-{current_subpoint_letter}",
+            "chunk_id": chunk_id,
             "article_number": current_article_number,
             "article_title": current_article_title,
             "chapter": current_chapter,
@@ -78,7 +90,10 @@ def chunk_articles_text(articles_text: str) -> list[dict]:
 
     def flush_prose_article():
         nonlocal prose_lines
-        if current_article_number is None or article_has_seen_any_paragraph_marker:
+        if current_article_number is None:
+            prose_lines = []
+            return
+        if article_has_seen_any_paragraph_marker or article_has_seen_any_subpoint:
             prose_lines = []
             return
         body = " ".join(prose_lines).strip()
@@ -96,6 +111,7 @@ def chunk_articles_text(articles_text: str) -> list[dict]:
 
     def flush_article():
         flush_paragraph()
+        flush_subpoint()
         flush_prose_article()
 
     for raw_line in lines:
@@ -114,7 +130,7 @@ def chunk_articles_text(articles_text: str) -> list[dict]:
             continue
 
         if kind == "section":
-            continue  # tracked but not currently used on chunks
+            continue
 
         if kind == "article":
             flush_article()
@@ -122,6 +138,8 @@ def chunk_articles_text(articles_text: str) -> list[dict]:
             current_article_title = None
             expecting_title = True
             article_has_seen_any_paragraph_marker = False
+            article_has_seen_any_subpoint = False
+            paragraphless_leadin_captured = False
             prose_lines = []
             continue
 
@@ -135,19 +153,20 @@ def chunk_articles_text(articles_text: str) -> list[dict]:
 
         if kind == "subpoint":
             flush_subpoint()
-            current_paragraph_has_subpoints = True
+            article_has_seen_any_subpoint = True
+            if current_paragraph_number is not None:
+                current_paragraph_has_subpoints = True
+            elif not paragraphless_leadin_captured:
+                current_paragraph_leadin_lines = list(prose_lines)
+                prose_lines = []
+                paragraphless_leadin_captured = True
             current_subpoint_letter = data["letter"]
             current_subpoint_lines = [data["text"]]
             continue
 
-        # continuation line
         if current_subpoint_letter is not None:
             current_subpoint_lines.append(data["text"])
         elif current_paragraph_number is not None:
-            # No sub-point open yet - this line extends the LEAD-IN, not a
-            # separate "whole paragraph" buffer. If a sub-point never shows up,
-            # the lead-in IS the whole paragraph's text - so this is correct
-            # either way, fixing exactly the bug we found.
             current_paragraph_leadin_lines.append(data["text"])
         elif current_article_number is not None:
             prose_lines.append(data["text"])
