@@ -1,7 +1,7 @@
 """LangGraph supervisor state and routing decisions."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 
 from pydantic import BaseModel, Field
 
@@ -16,7 +16,7 @@ class SupervisorDecision(BaseModel):
     """One routing decision in the supervisor's reasoning log."""
 
     iteration: int = Field(..., ge=0, description="Supervisor turn number (0-indexed).")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     next_worker: WorkerName | None = Field(
         None,
         description="Worker to dispatch to, or None when ending the audit.",

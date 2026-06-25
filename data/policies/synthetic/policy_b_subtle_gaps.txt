@@ -1,0 +1,34 @@
+PRIVACY NOTICE — Routinely (a habit-tracking app)
+Effective date: March 2025
+
+ABOUT THIS NOTICE
+This notice explains how Routinely handles your personal data when you use our
+mobile application.
+
+INFORMATION WE COLLECT
+We collect the habits you choose to track, your daily check-in entries, your email
+address, and your time zone. We use your time zone to schedule reminder
+notifications at appropriate local times.
+
+HOW WE USE YOUR INFORMATION
+We use your data to operate the habit-tracking features, send you reminder
+notifications, and improve our app through aggregated usage analysis. We rely on
+your consent, given when you create an account, as the legal basis for sending
+reminder notifications. We rely on the necessity of performing our contract with
+you for the core habit-tracking functionality.
+
+SHARING YOUR INFORMATION
+We use a third-party email delivery service to send account-related emails. We use
+a third-party push-notification service to deliver reminders to your device. Both
+providers are contractually restricted from using your data for their own purposes.
+
+SECURITY MEASURES
+All data is encrypted in transit using industry-standard protocols. We perform
+regular security reviews of our infrastructure.
+
+CHANGES TO THIS NOTICE
+We may update this notice from time to time. We will notify you of material changes
+via email or an in-app notification.
+
+CONTACT US
+If you have questions about this notice, email us at hello@routinely-example.com.

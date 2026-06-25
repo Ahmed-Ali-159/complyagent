@@ -1,7 +1,7 @@
 """Top-level audit report schema."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +14,7 @@ class AuditReport(BaseModel):
 
     audit_id: str = Field(..., description="Unique ID for this audit run.")
     policy_source: str = Field(..., description="Name or URL of the audited policy.")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     statements: list[PolicyStatement] = Field(default_factory=list)
     findings: list[Finding] = Field(default_factory=list)

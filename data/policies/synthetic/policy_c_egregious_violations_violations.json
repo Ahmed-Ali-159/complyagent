@@ -1,0 +1,71 @@
+{
+  "policy_file": "policy_c_egregious_violations.txt",
+  "description": "Deliberately egregious, multi-violation policy - a sanity-check fixture. If ComplyAgent fails to flag the majority of these as violations, something is fundamentally broken in the pipeline.",
+  "violations": [
+    {
+      "violation_id": "v1",
+      "section": "WHAT DO COLLECT",
+      "violated_articles": ["GDPR-Art-5-1-c"],
+      "severity": "critical",
+      "explanation": "Article 5(1)(c) (data minimisation) requires collection to be adequate, relevant, and limited to what is necessary. Collecting precise GPS location at all times, full contacts list, and photo metadata for a flash-sale shopping app is grossly excessive relative to the stated purpose.",
+      "expected_verdict": "violation"
+    },
+    {
+      "violation_id": "v2",
+      "section": "WHAT WE DO WITH IT",
+      "violated_articles": ["GDPR-Art-6-1"],
+      "severity": "critical",
+      "explanation": "Article 6(1) requires a valid legal basis for processing. 'However we see fit' and selling data without consent or any stated legal basis is a direct violation - there is no lawful basis articulated at all.",
+      "expected_verdict": "violation"
+    },
+    {
+      "violation_id": "v3",
+      "section": "HOW LONG WE KEEP IT",
+      "violated_articles": ["GDPR-Art-5-1-e"],
+      "severity": "critical",
+      "explanation": "Article 5(1)(e) (storage limitation) prohibits indefinite retention with no purpose-based limit. 'Forever, including after deletion' is a direct, explicit violation.",
+      "expected_verdict": "violation"
+    },
+    {
+      "violation_id": "v4",
+      "section": "YOUR CHOICES",
+      "violated_articles": ["GDPR-Art-15", "GDPR-Art-17"],
+      "severity": "critical",
+      "explanation": "Articles 15 (right of access) and 17 (right to erasure) cannot be waived by a user; GDPR rights are not contractually waivable. Stating users have no ability to access/correct/delete data, and that using the app waives GDPR rights, directly violates both articles.",
+      "expected_verdict": "violation"
+    },
+    {
+      "violation_id": "v5",
+      "section": "CHILDREN",
+      "violated_articles": ["GDPR-Art-8-1"],
+      "severity": "critical",
+      "explanation": "Article 8(1) requires parental consent for children's data when relying on consent for information society services targeted at children. Explicitly collecting data from under-13 users with zero safeguards is a direct violation.",
+      "expected_verdict": "violation"
+    },
+    {
+      "violation_id": "v6",
+      "section": "INTERNATIONAL TRANSFERS",
+      "violated_articles": ["GDPR-Art-44", "GDPR-Art-46"],
+      "severity": "critical",
+      "explanation": "Articles 44 and 46 require an adequacy decision or appropriate safeguards for transfers outside the EEA. Transferring to countries with 'no data protection laws' and 'no additional safeguards' is a direct, explicit violation.",
+      "expected_verdict": "violation"
+    },
+    {
+      "violation_id": "v7",
+      "section": "SECURITY",
+      "violated_articles": ["GDPR-Art-32-1"],
+      "severity": "critical",
+      "explanation": "Article 32(1) requires appropriate technical measures, including encryption where appropriate, given the risk. Explicitly declining to encrypt stored personal data (including payment card details) for performance reasons is a direct violation.",
+      "expected_verdict": "violation"
+    },
+    {
+      "violation_id": "v8",
+      "section": "CONTACT",
+      "violated_articles": ["GDPR-Art-13-1-a"],
+      "severity": "high",
+      "explanation": "Article 13(1)(a) requires identity and contact details of the controller to be provided. No contact method for privacy inquiries is given at all.",
+      "expected_verdict": "violation"
+    }
+  ],
+  "expected_clean_sections": []
+}

@@ -1,0 +1,32 @@
+{
+  "policy_file": "policy_a_mostly_compliant.txt",
+  "description": "Mostly compliant policy with two deliberately injected violations and one borderline/partial case.",
+  "violations": [
+    {
+      "violation_id": "v1",
+      "section": "10. CHILDREN'S DATA",
+      "violated_articles": ["GDPR-Art-8-1"],
+      "severity": "critical",
+      "explanation": "Article 8(1) requires verifiable parental consent for processing the personal data of children under 16 (or a lower age set by Member State law, minimum 13) when relying on consent as the legal basis for information society services. This policy explicitly states no special parental consent process exists for under-16 users, and frames children's data as 'low-risk' to justify skipping safeguards entirely.",
+      "expected_verdict": "violation"
+    },
+    {
+      "violation_id": "v2",
+      "section": "4. HOW LONG WE KEEP YOUR DATA",
+      "violated_articles": ["GDPR-Art-5-1-e"],
+      "severity": "medium",
+      "explanation": "Article 5(1)(e) (storage limitation) requires retention only for as long as necessary for the stated purpose. 'For as long as your account remains active' with no maximum inactivity-based deletion period is a soft violation - many real policies use this phrasing, and it is defensible if paired with periodic account-activity reviews, but as written it provides no concrete time limit for inactive-but-undeleted accounts.",
+      "expected_verdict": "partial"
+    }
+  ],
+  "expected_clean_sections": [
+    "1. WHO WE ARE",
+    "2. WHAT DATA WE COLLECT",
+    "3. WHY WE PROCESS YOUR DATA",
+    "5. WHO WE SHARE YOUR DATA WITH",
+    "6. INTERNATIONAL TRANSFERS",
+    "7. YOUR RIGHTS",
+    "8. SECURITY",
+    "9. MARKETING COMMUNICATIONS"
+  ]
+}

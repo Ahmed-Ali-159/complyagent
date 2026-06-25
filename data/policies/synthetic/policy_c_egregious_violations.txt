@@ -1,0 +1,39 @@
+PRIVACY POLICY — SnapDeal Express (a flash-sale shopping app)
+Updated: 2024
+
+WHAT WE COLLECT
+We collect your name, email, phone number, home address, payment card details,
+browsing history within the app, precise GPS location at all times the app is
+installed (even when not in use), your device contacts list, and your photo
+library metadata.
+
+WHAT WE DO WITH IT
+We use your data however we see fit to grow our business. We share and sell your
+personal data, including your location history and contacts list, to advertising
+partners, data brokers, and any other third party willing to pay for it. We do not
+ask for your permission before sharing this data.
+
+HOW LONG WE KEEP IT
+We keep all data forever, including after you delete your account, in case we need
+it for future business purposes.
+
+YOUR CHOICES
+You have no ability to access, correct, or delete your personal data. By using this
+app, you waive any rights you may have under any data protection law, including the
+GDPR.
+
+CHILDREN
+This app is intended for all ages, including children under 13, and we collect the
+same data from child users as from adult users with no additional safeguards or
+parental consent.
+
+INTERNATIONAL TRANSFERS
+We transfer all data to our servers and to our advertising partners' servers
+worldwide, including in countries with no data protection laws, with no additional
+safeguards.
+
+SECURITY
+We do not encrypt stored data, as encryption slows down our systems.
+
+CONTACT
+We do not provide a contact method for privacy inquiries.
