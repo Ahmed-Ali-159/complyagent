@@ -24,8 +24,6 @@ class LLMConfig(BaseModel):
 class RetrievalConfig(BaseModel):
     embedding_model: str
     reranker_model: str
-    chunk_size: int
-    chunk_overlap: int
     bm25_weight: float
     dense_weight: float
     initial_k: int

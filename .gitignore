@@ -1,5 +1,9 @@
 data/raw/
 data/processed/
+data/chroma/
+data/policies/real/
+data/policies/opp115/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
