@@ -16,6 +16,7 @@ from complyagent.prompts.researcher import SYSTEM_PROMPT
 from complyagent.retrieval.retrieve import retrieve as _retrieve_fn
 from complyagent.schemas.policy import PolicyStatement
 from complyagent.schemas.regulation import RegulationChunk
+from complyagent.agents._retry import with_llm_retry
 
 
 # Module-level state: the most recent retrieve() result. The agent's final
@@ -64,11 +65,11 @@ def research_statement(statement: PolicyStatement) -> list[RegulationChunk]:
 
     # create_agent returns a compiled LangGraph runnable. Passing tools=[...]
     # binds them; the agent loop will call them as the LLM decides.
-    agent = create_agent(
+    agent = with_llm_retry(create_agent(
         model=model,
         tools=[retrieve_gdpr_chunks],
         system_prompt=SYSTEM_PROMPT,
-    )
+    ))
 
     user_message = (
         "Find the GDPR provisions most relevant to this policy statement.\n\n"

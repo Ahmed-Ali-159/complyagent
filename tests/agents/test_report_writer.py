@@ -68,6 +68,7 @@ def _make_state(
         audit_id="audit-test-001",
         policy_source="test-policy.txt",
         raw_policy_text="Some policy text.",
+        audit_mode="full_policy",  # new required field
         statements=statements or [],
         findings=findings or [],
         gaps=gaps or [],

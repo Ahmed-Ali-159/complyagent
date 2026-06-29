@@ -115,6 +115,7 @@ def _build_realistic_state() -> SupervisorState:
         audit_id="audit-spotcheck-001",
         policy_source="synthetic-test-policy.txt",
         raw_policy_text="(full policy text omitted for spot-check)",
+        audit_mode="full_policy",
         statements=statements,
         findings=findings,
         gaps=gaps,

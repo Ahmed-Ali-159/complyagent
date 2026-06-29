@@ -8,6 +8,7 @@ from complyagent.schemas.enums import VerdictType
 from complyagent.schemas.findings import Finding
 from complyagent.schemas.policy import PolicyStatement
 from complyagent.schemas.regulation import RegulationChunk
+from complyagent.agents._retry import with_llm_retry
 
 
 # LLM-facing schema: no statement_id (Python sets it from the input statement,
@@ -49,7 +50,7 @@ def analyze_statement(
 
     model = get_chat_model()
     structured = model.with_structured_output(_AnalystOutput)
-    chain = ANALYST_PROMPT | structured
+    chain = with_llm_retry(ANALYST_PROMPT | structured)
 
     result: _AnalystOutput = chain.invoke({
         "statement_id": statement.statement_id,

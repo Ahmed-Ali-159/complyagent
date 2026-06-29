@@ -13,6 +13,7 @@ from complyagent.schemas.findings import Finding, Gap, Remediation
 from complyagent.schemas.policy import PolicyStatement
 from complyagent.schemas.report import AuditReport
 from complyagent.schemas.supervisor import SupervisorState
+from complyagent.agents._retry import with_llm_retry
 
 
 # Reports can be long — single LLM default of 4096 is tight for full-policy
@@ -66,6 +67,15 @@ def _format_gaps(gaps: list[Gap]) -> str:
 
 
 def _format_remediations(remediations: list[Remediation]) -> str:
+    """Render remediations compactly for the report prompt.
+
+    We deliberately omit suggested_policy_text from the LLM prompt because
+    it's the longest field by far and inflates the report prompt past
+    free-tier request limits on full-policy audits. The remediations remain
+    in the final AuditReport unchanged (they're passthrough state), so the
+    suggested text is preserved for downstream display — just not narrated
+    inline by the LLM.
+    """
     if not remediations:
         return "  (none)"
     lines = []
@@ -74,8 +84,7 @@ def _format_remediations(remediations: list[Remediation]) -> str:
         lines.append(
             f"  - [{r.remediation_id}] targets {r.target_kind} {r.target_id}, "
             f"related_citations=[{cites}]\n"
-            f"    recommendation: {r.recommendation}\n"
-            f"    suggested_policy_text: {r.suggested_policy_text}"
+            f"    recommendation: {r.recommendation}"
         )
     return "\n".join(lines)
 
@@ -93,7 +102,7 @@ def write_report(state: SupervisorState) -> AuditReport:
     """
     model = get_chat_model().bind(max_tokens=REPORT_MAX_TOKENS)
     structured = model.with_structured_output(_ReportDraft)
-    chain = REPORT_PROMPT | structured
+    chain = with_llm_retry(REPORT_PROMPT | structured)
 
     draft: _ReportDraft = chain.invoke({
         "audit_id": state.audit_id,

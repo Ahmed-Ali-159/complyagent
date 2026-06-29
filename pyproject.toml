@@ -48,3 +48,8 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.18",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: integration tests that hit real LLM APIs and retrieval (slow, deliberate-run only)",
+]

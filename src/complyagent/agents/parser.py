@@ -6,6 +6,7 @@ from complyagent.agents.llm_client import get_chat_model
 from complyagent.prompts.parser import PARSER_PROMPT
 from complyagent.schemas.enums import StatementCategory
 from complyagent.schemas.policy import PolicyStatement
+from complyagent.agents._retry import with_llm_retry
 
 # Minimum input length below which we skip the LLM entirely.
 MIN_INPUT_CHARS = 5
@@ -35,7 +36,7 @@ def parse_policy(policy_text: str) -> list[PolicyStatement]:
 
     model = get_chat_model()
     structured = model.with_structured_output(_PolicyStatementList)
-    chain = PARSER_PROMPT | structured
+    chain = with_llm_retry(PARSER_PROMPT | structured)
 
     result: _PolicyStatementList = chain.invoke({"policy_text": policy_text})
 
