@@ -81,3 +81,13 @@ def retrieve(query: str, k: int | None = None) -> list[RegulationChunk]:
     )
 
     return [_chunks_by_id[chunk_id] for chunk_id, _score in reranked if chunk_id in _chunks_by_id]
+
+def get_chunk_by_id(chunk_id: str) -> RegulationChunk | None:
+    """Look up a single RegulationChunk by its ID.
+
+    Returns None if the chunk_id is not in the corpus. Triggers lazy
+    initialization of the in-memory chunk store on first call.
+    """
+    _ensure_initialized()
+    assert _chunks_by_id is not None
+    return _chunks_by_id.get(chunk_id)

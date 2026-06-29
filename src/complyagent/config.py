@@ -66,6 +66,7 @@ class Secrets(BaseSettings):
         extra="ignore",
     )
     groq_api_key: str = Field(default="", alias="GROQ_API_KEY")
+    cerebras_api_key: str = Field(default="", alias="CEREBRAS_API_KEY")  
     langsmith_api_key: str = Field(default="", alias="LANGSMITH_API_KEY")
     langsmith_tracing: bool = Field(default=False, alias="LANGSMITH_TRACING")
     langsmith_project: str = Field(default="complyagent", alias="LANGSMITH_PROJECT")
