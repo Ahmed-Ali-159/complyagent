@@ -175,7 +175,7 @@ def test_completely_empty_state_still_produces_valid_report():
     assert isinstance(report, AuditReport)
 
 
-# max_tokens override ---------------------------------------------------------
+# max_tokens override -------------------------------------------------------
 
 def test_max_tokens_override_applied():
     """Verify .bind(max_tokens=8192) is actually called on the model."""
