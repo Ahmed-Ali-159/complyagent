@@ -16,6 +16,7 @@ from complyagent.retrieval.retrieve import get_chunk_by_id
 from complyagent.schemas.findings import Finding, Remediation
 from complyagent.schemas.findings import Gap
 from complyagent.schemas.policy import PolicyStatement
+from complyagent.agents._retry import with_llm_retry
 
 
 # LLM-facing schema: only the fields the LLM actually produces.
@@ -47,7 +48,7 @@ def _draft_for_finding(
     """Internal: build a remediation for a non-compliant Finding."""
     model = get_chat_model()
     structured = model.with_structured_output(_RemediationDraft)
-    chain = FINDING_PROMPT | structured
+    chain = with_llm_retry(FINDING_PROMPT | structured)
 
     result: _RemediationDraft = chain.invoke({
         "original_statement": original_statement.text,
@@ -74,7 +75,7 @@ def _draft_for_gap(gap: Gap, remediation_id: str) -> Remediation:
     """Internal: build a remediation for a coverage Gap."""
     model = get_chat_model()
     structured = model.with_structured_output(_RemediationDraft)
-    chain = GAP_PROMPT | structured
+    chain = with_llm_retry(GAP_PROMPT | structured)
 
     result: _RemediationDraft = chain.invoke({
         "requirement": gap.requirement,

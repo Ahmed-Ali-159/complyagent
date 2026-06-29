@@ -4,7 +4,7 @@
   "violations": [
     {
       "violation_id": "v1",
-      "section": "WHAT DO COLLECT",
+      "section": "WHAT WE COLLECT",
       "violated_articles": ["GDPR-Art-5-1-c"],
       "severity": "critical",
       "explanation": "Article 5(1)(c) (data minimisation) requires collection to be adequate, relevant, and limited to what is necessary. Collecting precise GPS location at all times, full contacts list, and photo metadata for a flash-sale shopping app is grossly excessive relative to the stated purpose.",

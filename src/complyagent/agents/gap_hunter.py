@@ -12,6 +12,7 @@ from complyagent.prompts.gap_hunter import GAP_HUNTER_PROMPT
 from complyagent.schemas.enums import GapSeverity
 from complyagent.schemas.findings import Gap
 from complyagent.schemas.policy import PolicyStatement
+from complyagent.agents._retry import with_llm_retry
 
 
 # LLM-facing schema: no gap_id (Python assigns it).
@@ -70,7 +71,7 @@ def hunt_gaps(
 
     model = get_chat_model()
     structured = model.with_structured_output(_GapList)
-    chain = GAP_HUNTER_PROMPT | structured
+    chain = with_llm_retry(GAP_HUNTER_PROMPT | structured)
 
     result: _GapList = chain.invoke({
         "statements": _format_statements(statements),

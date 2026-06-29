@@ -1,0 +1,1 @@
+"""Supervisor package — owns the LangGraph that orchestrates the six workers."""
