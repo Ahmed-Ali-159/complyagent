@@ -26,3 +26,12 @@ class PolicyStatement(BaseModel):
         None,
         description="Original sentence(s) from the policy this was distilled from, for traceability.",
     )
+
+# What is the difference between text and source_span fields in the PolicyStatement class?
+# Here is an example to illustrate the difference:
+# Example:
+    # Let's say we have a privacy policy that contains the following sentence:
+        # "We collect your email address and phone number to provide you with personalized services."
+    # In this case, the text field in the PolicyStatement class would contain the distilled claim:
+    # "We collect your email address and phone number."
+    # The source_span field would contain the original sentence from the policy
