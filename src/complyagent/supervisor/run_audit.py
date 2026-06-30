@@ -91,7 +91,7 @@ def stream_audit(
         "gaps": 0,
         "remediations": 0,
     }
-    last_decision_iteration = 0
+    emitted_keys: set[tuple[str, int]] = set()
     final_report: AuditReport | None = None
 
     for chunk in _compiled_graph.stream(initial_state, stream_mode="updates"):
@@ -136,14 +136,21 @@ def stream_audit(
                 "remediation",
                 "report_writer",
             }:
-                # Dedupe: if the latest decision's iteration hasn't advanced
-                # since the previous yielded event, skip — same logical step.
-                # process_statement nodes can yield without a decision (fan-out
-                # branches don't all log decisions), so we still emit those.
+                # Dedupe by (phase, decision_iteration). LangGraph can emit
+                # the same node update multiple times during a single tick;
+                # we only yield each (phase, iteration) pair once.
+                # Events without a decision (e.g. fan-out branches that don't
+                # log) get a synthetic key based on stats so they pass through.
                 if latest_decision is not None:
-                    if latest_decision.iteration <= last_decision_iteration:
-                        continue
-                    last_decision_iteration = latest_decision.iteration
+                    key = (node_name, latest_decision.iteration)
+                else:
+                    # Use a stats fingerprint as the "iteration" for None cases.
+                    # Two consecutive None events with same stats = duplicate.
+                    key = (node_name, hash(tuple(sorted(running_stats.items()))))
+
+                if key in emitted_keys:
+                    continue
+                emitted_keys.add(key)
 
                 yield AuditEvent(
                     phase=node_name,

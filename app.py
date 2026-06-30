@@ -72,13 +72,6 @@ with st.sidebar:
             st.session_state.policy_input = _load_preset(filename)
             st.session_state.final_report = None  # clear stale report
             st.rerun()  # force immediate rerender so textarea picks up new value
-
-    st.divider()
-    st.subheader("Or skip the audit")
-    if st.button("Show demo report (no LLM)", use_container_width=True):
-        from complyagent.demo.fixture_report import build_demo_report
-        st.session_state.final_report = build_demo_report()
-        st.rerun()
     
     st.divider()
 
@@ -164,7 +157,7 @@ if run_clicked:
     st.session_state.final_report = None  # clear any previous run
 
     progress_placeholder = st.empty()
-    feed_placeholder = st.container()
+    feed_placeholder = st.empty()
     feed_entries: list[str] = []
 
     audit_mode: Literal["single_clause", "full_policy"] = st.session_state.audit_mode
@@ -185,10 +178,13 @@ if run_clicked:
                 else:
                     feed_entries.append(f"**{label}** — done")
 
-                # Render the running feed (newest at bottom) + stats line.
-                with feed_placeholder.container():
-                    for line in feed_entries:
-                        st.markdown(f"- {line}")
+                # Render the running feed as one combined markdown block.
+                # Using .markdown() on an st.empty() placeholder REPLACES its
+                # contents each call — unlike st.container(), which stacks a
+                # new nested container on every call, causing visual duplication.
+                feed_placeholder.markdown(
+                    "\n".join(f"- {line}" for line in feed_entries)
+                )
 
                 stats = event.stats
                 progress_placeholder.info(
