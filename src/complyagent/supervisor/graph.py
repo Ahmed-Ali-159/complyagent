@@ -22,7 +22,8 @@ from complyagent.schemas.policy import PolicyStatement
 from complyagent.schemas.supervisor import SupervisorState
 from complyagent.schemas.regulation import RegulationChunk
 from complyagent.schemas.enums import WorkerName
-from complyagent.schemas.supervisor import SupervisorDecision, SupervisorState
+from complyagent.schemas.report import SupervisorDecision
+from complyagent.schemas.supervisor import SupervisorState
 
 # Sub-phase 4.4 thresholds. Sourced from settings to keep tunable via config.
 CONFIDENCE_THRESHOLD = settings.graph.confidence_threshold  # default 0.6

@@ -1,5 +1,9 @@
 """Central configuration: merges config.yaml + .env into a typed settings object."""
+
 from __future__ import annotations
+
+from dotenv import load_dotenv
+load_dotenv()
 
 from pathlib import Path
 

@@ -12,24 +12,23 @@ from complyagent.schemas.enums import WorkerName
 from complyagent.schemas.findings import Finding, Gap, Remediation
 from complyagent.schemas.policy import PolicyStatement
 from complyagent.schemas.regulation import RegulationChunk
-from complyagent.schemas.report import AuditReport
+from complyagent.schemas.report import AuditReport, SupervisorDecision
 
+# class SupervisorDecision(BaseModel):
+#     """One routing decision in the supervisor's reasoning log."""
 
-class SupervisorDecision(BaseModel):
-    """One routing decision in the supervisor's reasoning log."""
-
-    iteration: int = Field(..., ge=0, description="Supervisor turn number (0-indexed).")
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    next_worker: WorkerName | None = Field(
-        None,
-        description="Worker to dispatch to, or None when ending the audit.",
-    )
-    reasoning: str = Field(
-        ...,
-        min_length=5,
-        description="Why the supervisor chose this action given the current state.",
-    )
-    is_terminal: bool = Field(False, description="True if this decision ends the audit.")
+#     iteration: int = Field(..., ge=0, description="Supervisor turn number (0-indexed).")
+#     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+#     next_worker: WorkerName | None = Field(
+#         None,
+#         description="Worker to dispatch to, or None when ending the audit.",
+#     )
+#     reasoning: str = Field(
+#         ...,
+#         min_length=5,
+#         description="Why the supervisor chose this action given the current state.",
+#     )
+#     is_terminal: bool = Field(False, description="True if this decision ends the audit.")
 
 
 def _latest_finding_per_statement(
