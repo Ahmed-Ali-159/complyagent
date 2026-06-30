@@ -125,6 +125,7 @@ def write_report(state: SupervisorState) -> AuditReport:
         findings=state.findings,
         gaps=state.gaps,
         remediations=state.remediations,
+        decisions=state.decisions,
         executive_summary=draft.executive_summary,
         markdown_report=draft.markdown_report,
     )

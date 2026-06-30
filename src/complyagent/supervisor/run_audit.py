@@ -1,20 +1,19 @@
-"""Public entry point for running a full ComplyAgent audit.
+"""Public entry points for running ComplyAgent audits.
 
-Builds the initial SupervisorState, invokes the compiled graph, and returns
-the final AuditReport. This is what integration tests and the eventual
-Streamlit UI call.
+run_audit:    blocking — returns the final AuditReport when done.
+stream_audit: streaming — yields AuditEvent objects per node, then a final
+              AuditCompleteEvent carrying the report. Use this for UIs.
 """
 
-from typing import Literal
+from typing import Iterator, Literal
 from uuid import uuid4
 
 from complyagent.schemas.report import AuditReport
 from complyagent.schemas.supervisor import SupervisorState
+from complyagent.supervisor.events import AuditCompleteEvent, AuditEvent
 from complyagent.supervisor.graph import build_graph
 
-# Compile the graph once at module import. LangGraph compilation is
-# non-trivial (validates topology, resolves edges); doing it once and
-# reusing the compiled object across audits avoids per-call overhead.
+
 _compiled_graph = build_graph()
 
 
@@ -61,3 +60,99 @@ def run_audit(
             f"decisions={len(final_state.get('decisions', []))}."
         )
     return report
+
+def stream_audit(
+    raw_policy_text: str,
+    audit_mode: Literal["single_clause", "full_policy"],
+    policy_source: str = "(unspecified)",
+    audit_id: str | None = None,
+) -> Iterator[AuditEvent | AuditCompleteEvent]:
+    """Run an audit, yielding progress events per node completion.
+
+    Yields one AuditEvent per LangGraph node finish, then one AuditCompleteEvent
+    carrying the final AuditReport. Use this for UIs that need live progress;
+    use run_audit() instead for callers that only need the final result.
+    """
+    if audit_id is None:
+        audit_id = f"audit-{uuid4().hex[:8]}"
+
+    initial_state = SupervisorState(
+        audit_id=audit_id,
+        policy_source=policy_source,
+        raw_policy_text=raw_policy_text,
+        audit_mode=audit_mode,
+    )
+
+    # LangGraph's stream() with mode="updates" yields {node_name: state_update}
+    # per node completion. We track running totals across events ourselves.
+    running_stats = {
+        "statements": 0,
+        "findings": 0,
+        "gaps": 0,
+        "remediations": 0,
+    }
+    last_decision_iteration = 0
+    final_report: AuditReport | None = None
+
+    for chunk in _compiled_graph.stream(initial_state, stream_mode="updates"):
+        # chunk is {node_name: partial_state_update} for the just-completed node.
+        # In fan-out cases (Send), multiple branches finish in one tick and
+        # produce one chunk per branch.
+        for node_name, update in chunk.items():
+            if not isinstance(update, dict):
+                continue
+
+            # Update running stats from any list fields the node wrote.
+            if "statements" in update:
+                running_stats["statements"] = max(
+                    running_stats["statements"], len(update["statements"])
+                )
+            if "findings" in update:
+                running_stats["findings"] = max(
+                    running_stats["findings"], running_stats["findings"] + len(update["findings"])
+                )
+            if "gaps" in update:
+                running_stats["gaps"] = len(update["gaps"])
+            if "remediations" in update:
+                running_stats["remediations"] = len(update["remediations"])
+
+            # Extract the latest decision (if any) appended by this node.
+            new_decisions = update.get("decisions", [])
+            latest_decision = new_decisions[-1] if new_decisions else None
+
+            # Capture the final report from the terminal node.
+            if node_name == "report_writer" and "report" in update:
+                final_report = update["report"]
+
+            # Only emit events for node names in our enum; LangGraph internal
+            # nodes (like the dummy "route" passthrough) we still emit so the
+            # UI sees the case-routing decision logged there.
+            if node_name in {
+                "parser",
+                "process_statement",
+                "check_confidence",
+                "route",
+                "gap_hunter",
+                "remediation",
+                "report_writer",
+            }:
+                # Dedupe: if the latest decision's iteration hasn't advanced
+                # since the previous yielded event, skip — same logical step.
+                # process_statement nodes can yield without a decision (fan-out
+                # branches don't all log decisions), so we still emit those.
+                if latest_decision is not None:
+                    if latest_decision.iteration <= last_decision_iteration:
+                        continue
+                    last_decision_iteration = latest_decision.iteration
+
+                yield AuditEvent(
+                    phase=node_name,
+                    decision=latest_decision,
+                    stats=dict(running_stats),
+                )
+
+    if final_report is None:
+        raise ValueError(
+            "stream_audit: graph terminated without producing an AuditReport."
+        )
+    yield AuditCompleteEvent(report=final_report)
