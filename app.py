@@ -15,6 +15,7 @@ from complyagent.supervisor.events import AuditCompleteEvent, AuditEvent
 from complyagent.supervisor.run_audit import stream_audit
 
 
+
 # --- Page setup --------------------------------------------------------------
 
 st.set_page_config(
