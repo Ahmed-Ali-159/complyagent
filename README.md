@@ -1,29 +1,133 @@
 # ComplyAgent
 
-Multi-agent GDPR compliance auditor. Built with LangGraph (supervisor-worker topology), hybrid RAG over the EU GDPR, and Groq-hosted `openai/gpt-oss-120b`.
+**Multi-agent GDPR compliance auditor.** Paste a privacy policy, get a structured audit report: per-statement verdicts, coverage gap analysis, remediation drafts, and a full supervisor reasoning log.
 
-## Status
+Built with LangGraph (supervisor-worker multi-agent topology), hybrid RAG over the full EU GDPR text, and Groq-hosted `openai/gpt-oss-120b`.
 
-**Phase 4 complete.** End-to-end audit pipeline validated against synthetic Policy C (8/8 documented violations caught). Currently moving to Phase 6 (Streamlit demo). Phase 5 (formal eval) deferred — see Deferred Work below.
+---
 
-| Phase | Status |
+## Demo
+
+```
+uv run streamlit run app.py
+```
+
+Paste any privacy policy text (or load a synthetic preset), choose **Full policy** or **Single clause**, and click **Run audit**. Results stream live as each worker completes.
+
+---
+
+## What it does
+
+ComplyAgent runs six specialist workers in sequence, orchestrated by a LangGraph supervisor:
+
+| Worker | Input | Output |
+|---|---|---|
+| **Policy Parser** | Raw policy text | Atomic `PolicyStatement` objects, each tagged with a GDPR category |
+| **Regulation Researcher** | One `PolicyStatement` | Relevant `RegulationChunk` objects from the GDPR corpus (hybrid RAG + LLM query rewriting) |
+| **Compliance Analyst** | Statement + retrieved chunks | `Finding` with verdict (`compliant` / `partial` / `violation` / `unclear`) and citations |
+| **Gap Hunter** | All statements + findings | `Gap` objects for mandatory GDPR disclosures (Art. 13/14) the policy never addresses |
+| **Remediation Drafter** | `Finding` or `Gap` | `Remediation` with a plain-English recommendation and drop-in policy language |
+| **Report Writer** | Full audit state | `AuditReport` with executive summary and full markdown narrative |
+
+The supervisor makes three real routing decisions at runtime:
+
+1. **Case 1 vs. Case 2** — single-clause audits skip the Gap Hunter entirely
+2. **Confidence-based re-retrieval** — low-confidence findings trigger the Researcher to retry (capped at `max_reretrieval=2`)
+3. **Remediation filtering** — only `violation` and `partial` findings + all gaps get remediations; `compliant` and `unclear` are passed through
+
+Every decision is logged to a `SupervisorState.decisions` trail, visible in the UI's reasoning log panel.
+
+---
+
+## Architecture
+
+```
+raw policy text
+      │
+      ▼
+┌─────────────┐
+│Policy Parser│  → list[PolicyStatement]
+└─────────────┘
+      │
+      ▼  (one branch per statement, via LangGraph Send)
+┌──────────────────────────────┐
+│Regulation Researcher         │  LLM rewrites statement → GDPR search query → retrieve()
+│  +                           │
+│Compliance Analyst            │  Verdict + citations + confidence score
+└──────────────────────────────┘
+      │
+      ▼  (confidence check → retry if < 0.6, cap at 2 retries)
+┌────────────┐       ┌──────────────────┐
+│ Gap Hunter │  OR   │ (Case 1: skipped)│
+└────────────┘       └──────────────────┘
+      │
+      ▼
+┌───────────────────┐
+│Remediation Drafter│  (violation/partial findings + all gaps only)
+└───────────────────┘
+      │
+      ▼
+┌─────────────┐
+│Report Writer│  → AuditReport
+└─────────────┘
+```
+
+### Retrieval pipeline (Phase 2)
+
+Hybrid retrieval over 882 GDPR chunks (709 articles + 173 recitals):
+
+- **BM25** (sparse, exact legal terminology matching)
+- **BAAI/bge-base-en-v1.5** dense embeddings stored in ChromaDB
+- **Weighted RRF fusion** (BM25 weight 0.4, dense weight 0.6)
+- **BAAI/bge-reranker-v2-m3** cross-encoder reranking
+
+Evaluated against 90 queries from [ClaimRAG-LAW](https://huggingface.co/datasets/SNTSVV/ClaimRAG-LAW) (articles-only subset for fair comparison):
+
+| Metric | Value |
 |---|---|
-| 1 — Schemas + synthetic policies + GDPR chunker | Complete |
-| 2 — Hybrid retrieval (BM25 + dense + RRF + reranker) | Complete |
-| 3 — Six worker agents | Complete (46 unit tests) |
-| 4 — Supervisor + LangGraph orchestration | Complete (12 unit tests + Policy C integration) |
-| 5 — Evaluation (verdict accuracy, citation correctness, OPP-115 routing) | Deferred |
-| 6 — Streamlit demo | In progress |
-| 7 — Polish, CI, deployment | Pending |
+| Recall@5 | 0.71 |
+| Recall@10 | 0.79 |
+| MRR | 0.59 |
+
+Full methodology: [`docs/eval_notes.md`](docs/eval_notes.md)
+
+---
+
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Orchestration | LangGraph (StateGraph, Send fan-out, conditional edges, cyclic retry loop) |
+| LLM | Groq `openai/gpt-oss-120b` (primary), Cerebras (fallback) |
+| LLM framework | LangChain / LangChain-Groq / LangChain-Cerebras |
+| Vector store | ChromaDB (persistent) |
+| Embeddings | BAAI/bge-base-en-v1.5 |
+| Reranker | BAAI/bge-reranker-v2-m3 |
+| Sparse retrieval | rank_bm25 (BM25Okapi) |
+| Schemas | Pydantic v2 |
+| Config | Hydra / OmegaConf |
+| UI | Streamlit (streaming via LangGraph `.stream()`) |
+| Observability | LangSmith (auto-instrumented) |
+| Package manager | uv |
+| Testing | pytest (unit: mocked LLM, integration: real LLM) |
+
+---
 
 ## Quickstart
 
 ```powershell
+# Install dependencies
 uv sync
-uv run python -c "from complyagent.config import settings; print(settings.llm.worker_model)"
+
+# Add your API keys to .env (copy from .env.example)
+copy .env.example .env
+# Fill in GROQ_API_KEY (required), LANGSMITH_API_KEY (optional)
+
+# Run the Streamlit app
+uv run streamlit run app.py
 ```
 
-Running an audit programmatically:
+### Run programmatically
 
 ```python
 from complyagent.supervisor.run_audit import run_audit
@@ -33,75 +137,100 @@ report = run_audit(
     audit_mode="full_policy",   # or "single_clause"
     policy_source="example.com/privacy",
 )
+
 print(report.executive_summary)
 print(report.markdown_report)
 ```
 
-## Architecture
+### Stream events (for custom UIs)
 
-A LangGraph supervisor coordinates six specialist workers, with three real runtime decisions hosted at the supervisor layer:
+```python
+from complyagent.supervisor.run_audit import stream_audit
+from complyagent.supervisor.events import AuditEvent, AuditCompleteEvent
 
-1. **Case routing** — single-clause vs. full-policy audits take structurally different paths (single-clause skips Gap Hunter entirely)
-2. **Confidence-based re-retrieval** — when the Analyst returns a low-confidence verdict, the supervisor re-runs research+analysis for that statement (capped at `max_reretrieval=2`)
-3. **Remediation skip filtering** — only violation/partial findings + all gaps receive remediations; compliant and unclear findings are passed through unchanged
+for event in stream_audit(raw_policy_text=..., audit_mode="full_policy"):
+    if isinstance(event, AuditEvent):
+        print(f"[{event.phase}] {event.decision.reasoning if event.decision else 'done'}")
+    elif isinstance(event, AuditCompleteEvent):
+        print(event.report.executive_summary)
+```
 
-Every supervisor decision is logged to a `SupervisorState.decisions` field, producing a fully auditable reasoning trail for each run.
+---
 
-### Workers
+## Project structure
 
-1. **Policy Parser** — atomizes policy text into self-contained factual claims, each tagged with a GDPR-relevant category
-2. **Regulation Researcher** — LLM rewrites the statement into a GDPR-native search query, then invokes hybrid retrieval via a bound tool (one tool call per statement)
-3. **Compliance Analyst** — verdicts each claim against retrieved articles; emits `compliant`, `partial`, `violation`, or `unclear` with a self-reported confidence score
-4. **Gap Hunter** — checks the full statement set against a hardcoded checklist of mandatory GDPR Article 13/14 disclosures; runs only in full-policy audits
-5. **Remediation Drafter** — writes process recommendations + drop-in policy text for each violation and gap
-6. **Report Writer** — assembles the final `AuditReport` with executive summary and markdown narrative
+```
+complyagent/
+├── app.py                          # Streamlit entry point
+├── data/
+│   ├── policies/synthetic/         # Three synthetic test policies + ground-truth sidecars
+│   ├── processed/chunks.json       # 882 GDPR chunks (pre-built)
+│   ├── chroma/                     # Persistent ChromaDB vector index
+│   └── eval/                       # Integration test baselines
+├── docs/
+│   ├── eval_notes.md               # Retrieval evaluation methodology + results
+│   └── project_notes.md            # Full technical reference (architecture decisions, bugs, lessons)
+├── src/complyagent/
+│   ├── agents/                     # Six worker functions + LLM factory + retry helper
+│   ├── demo/                       # Synthetic AuditReport fixture for UI development
+│   ├── prompts/                    # ChatPromptTemplate definitions (one per worker)
+│   ├── retrieval/                  # BM25, embeddings, ChromaDB, RRF, reranker, retrieve()
+│   ├── schemas/                    # Pydantic models (policy, findings, gaps, report, state)
+│   └── supervisor/                 # LangGraph graph, run_audit, stream_audit, events
+├── tests/
+│   ├── agents/                     # Unit tests (mocked LLM, 46 tests)
+│   ├── supervisor/                 # Unit tests (mocked workers, 16 tests)
+│   └── integration/                # Real-LLM integration tests (3 policies, @pytest.mark.integration)
+└── scripts/                        # Spot-check scripts for manual verification
+```
 
-### Hard guardrails
+---
 
-- `max_iterations=15` — supervisor decision-count ceiling; force-terminates retry loops
-- `max_reretrieval=2` — per-statement retry cap
-- `confidence_threshold=0.6` — trigger for re-retrieval
-- All LLM chains wrapped with exponential-backoff retry to absorb rate-limit (429) errors
+## Validation results
 
-## Retrieval Evaluation
-
-Evaluated against 90 ground-truth-verified queries from the [ClaimRAG-LAW](https://huggingface.co/datasets/SNTSVV/ClaimRAG-LAW)
-benchmark (SNTSVV, HuggingFace). Since this benchmark's ground truth labels only
-ever reference GDPR Articles (never Recitals), we report Recall@5/MRR with
-retrieval restricted to Articles for a fair comparison:
-
-| Metric | Value |
+| Test | Result |
 |---|---|
-| Recall@5 | 0.71 |
-| Recall@10 | 0.79 |
-| MRR | 0.59 |
+| Policy C (8 documented violations) | **8/8 caught** in a single real-LLM run |
+| Policy A (mostly compliant) | Pending (deferred to post-tier upgrade) |
+| Policy B (subtle gaps) | Pending (deferred to post-tier upgrade) |
+| Single-clause retention violation | Correct `violation` verdict, confidence 0.96, cites `GDPR-Art-5-1-e` |
+| Single-clause vague sharing clause | Correct `violation` after 2 retries (retry loop demonstrated live) |
 
-In production, ComplyAgent's retrieval also returns Recitals — manual inspection
-confirmed several "failed" queries under article-only ground truth were in fact
-correctly answered by a highly relevant Recital instead (e.g. a purpose-limitation
-scenario question was best answered by Recital 50, not the terser Article 5(1)(b)
-principle statement). Recitals are kept in production retrieval because they
-provide this kind of interpretive value the bare article text often lacks, even
-though it means this benchmark — which has no mechanism to credit a correct
-recital-only answer — slightly understates real-world answer quality.
+Policy C baseline output: [`data/eval/phase4_policy_c_baseline.txt`](data/eval/phase4_policy_c_baseline.txt)
 
-Full methodology and diagnostic findings: [docs/eval_notes.md](docs/eval_notes.md)
+---
 
-## Phase 4 Integration Result
+## Guardrails
 
-End-to-end audit against synthetic Policy C (a deliberately egregious 8-violation fixture, included at `data/policies/synthetic/policy_c_egregious_violations.txt`):
+| Parameter | Value | Purpose |
+|---|---|---|
+| `max_iterations` | 15 | Hard ceiling on supervisor decision count; prevents runaway loops |
+| `max_reretrieval` | 2 | Per-statement retry cap on low-confidence findings |
+| `confidence_threshold` | 0.6 | Minimum Analyst confidence before triggering re-retrieval |
+| `stale_state_threshold` | 3 | Supervisor turns without state change before escalation |
 
-- **8 of 8 documented violations caught**, including subtle ones (contractual waiver of GDPR rights, international transfers without safeguards, missing controller identity)
-- 11 findings produced across all statements
-- 16 remediations drafted (one per violation/partial finding + one per gap)
-- Full audit completed in ~11 minutes on Groq free tier (most of which was rate-limit backoff)
+All chains are wrapped with `with_retry(stop_after_attempt=5, wait_exponential_jitter=True)` to handle rate-limit errors.
 
-Baseline output preserved at `data/eval/phase4_policy_c_baseline.txt`.
+---
 
-## Deferred Work
+## Known limitations and deferred work
 
-The following items are explicitly deferred from current phases, recorded here so the unfinished pieces remain visible:
+- **Free-tier rate limits** (Groq: 8k TPM, 200k TPD) constrain integration test throughput. Policies A and B integration tests have been written and validated to run; execution deferred to post-tier upgrade.
+- **Phase 5 (formal evaluation)** deferred: verdict accuracy at scale, RAGAS faithfulness eval on the Analyst, full OPP-115 category-routing benchmarks.
+- **Recital preference in citations:** the Analyst occasionally cites GDPR Recitals (interpretive context) rather than the binding Article text. Calibration issue, not a structural bug.
+- **Free-tier demo speed:** a full-policy audit takes 10-15 minutes on Groq free tier due to rate-limit backoff. Single-clause audits complete in 1-3 minutes. Dev Tier / Cerebras eliminates most of this.
+- **Phase 7** (CI/CD, Docker, Streamlit Cloud deployment) not yet implemented.
 
-- **Policy A & Policy B integration tests** — written but not yet run end-to-end. The free-tier Groq quota (200k tokens/day) supports approximately one full audit per day; these will be run after a tier upgrade.
-- **Phase 5 — Formal evaluation** — verdict accuracy, citation correctness, gap recall, and OPP-115 category-routing benchmarks are planned but not yet implemented. Phase 4's integration test confirms the system works end-to-end; Phase 5 would measure how well it generalizes.
-- **Human-in-the-loop verdict override** — `unclear` findings currently render as "manual review recommended" in the report. A UI-level override mechanism was scoped in the original plan but pushed to Phase 6 polish if time allows.
+---
+
+## Development phases
+
+| Phase | Deliverable | Status |
+|---|---|---|
+| 1 | Pydantic schemas, GDPR PDF chunker (882 chunks), synthetic test policies | ✅ Complete |
+| 2 | Hybrid RAG pipeline, ChromaDB, BM25, RRF, reranker, retrieval eval | ✅ Complete |
+| 3 | Six worker agents (46 unit tests) | ✅ Complete |
+| 4 | LangGraph supervisor, routing, retry loop, decision logging (16 unit tests + Policy C integration) | ✅ Complete |
+| 5 | Formal evaluation (verdict accuracy, RAGAS faithfulness, OPP-115 routing) | ⏳ Deferred |
+| 6 | Streamlit demo UI, LangSmith, streaming | ✅ Complete |
+| 7 | CI/CD, Docker, Streamlit Cloud deployment | ⏳ Pending |
