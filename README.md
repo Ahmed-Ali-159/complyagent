@@ -207,7 +207,6 @@ Policy C baseline output: [`data/eval/phase4_policy_c_baseline.txt`](data/eval/p
 | `max_iterations` | 15 | Hard ceiling on supervisor decision count; prevents runaway loops |
 | `max_reretrieval` | 2 | Per-statement retry cap on low-confidence findings |
 | `confidence_threshold` | 0.6 | Minimum Analyst confidence before triggering re-retrieval |
-| `stale_state_threshold` | 3 | Supervisor turns without state change before escalation |
 
 All chains are wrapped with `with_retry(stop_after_attempt=5, wait_exponential_jitter=True)` to handle rate-limit errors.
 
@@ -219,7 +218,6 @@ All chains are wrapped with `with_retry(stop_after_attempt=5, wait_exponential_j
 - **Phase 5 (formal evaluation)** deferred: verdict accuracy at scale, RAGAS faithfulness eval on the Analyst, full OPP-115 category-routing benchmarks.
 - **Recital preference in citations:** the Analyst occasionally cites GDPR Recitals (interpretive context) rather than the binding Article text. Calibration issue, not a structural bug.
 - **Free-tier demo speed:** a full-policy audit takes 10-15 minutes on Groq free tier due to rate-limit backoff. Single-clause audits complete in 1-3 minutes. Dev Tier / Cerebras eliminates most of this.
-- **Phase 7** (CI/CD, Docker, Streamlit Cloud deployment) not yet implemented.
 
 ---
 
@@ -233,4 +231,3 @@ All chains are wrapped with `with_retry(stop_after_attempt=5, wait_exponential_j
 | 4 | LangGraph supervisor, routing, retry loop, decision logging (16 unit tests + Policy C integration) | ✅ Complete |
 | 5 | Formal evaluation (verdict accuracy, RAGAS faithfulness, OPP-115 routing) | ⏳ Deferred |
 | 6 | Streamlit demo UI, LangSmith, streaming | ✅ Complete |
-| 7 | CI/CD, Docker, Streamlit Cloud deployment | ⏳ Pending |
